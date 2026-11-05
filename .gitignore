@@ -1,0 +1,30 @@
+.gitignore · GITIGNORE
+# Secrets
+.env
+ 
+# Local data
+instance/
+*.db
+*.sqlite
+ 
+# Model weights (downloaded automatically by ultralytics on first run)
+*.pt
+ 
+# Unused asset
+static/images/backgroundd.jpg
+ 
+# Python
+__pycache__/
+*.pyc
+VR-VOC/
+venv/
+.venv/
+ 
+# Misc
+*.tex
+*.aux
+*.log
+.DS_Store
+.vscode/
+.idea/
+ 
