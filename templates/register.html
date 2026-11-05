@@ -1,0 +1,496 @@
+{% extends "base.html" %}
+
+{% block title %}Register - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-split">
+
+        <!-- ── LEFT: Brand panel ─────────────────────────────── -->
+        <div class="auth-brand-panel">
+            <div class="auth-orb auth-orb-1"></div>
+            <div class="auth-orb auth-orb-2"></div>
+            <div class="auth-orb auth-orb-3"></div>
+            <div class="auth-dot-grid"></div>
+
+            <div class="auth-brand-content">
+                <div class="auth-brand-logo">
+                    <i class="fas fa-vr-cardboard"></i>
+                </div>
+                <h1 class="auth-brand-name">Join the journey</h1>
+                <p class="auth-brand-tagline">
+                    Create your account and start learning vocabulary through immersive virtual reality environments.
+                </p>
+
+                <div class="auth-steps">
+                    <div class="auth-step">
+                        <div class="auth-step-num">1</div>
+                        <div class="auth-step-text">
+                            <strong>Create your account</strong>
+                            <span>Takes less than 30 seconds</span>
+                        </div>
+                    </div>
+                    <div class="auth-step">
+                        <div class="auth-step-num">2</div>
+                        <div class="auth-step-text">
+                            <strong>Pick an environment</strong>
+                            <span>Classroom, Kitchen, Supermarket&hellip;</span>
+                        </div>
+                    </div>
+                    <div class="auth-step">
+                        <div class="auth-step-num">3</div>
+                        <div class="auth-step-text">
+                            <strong>Learn &amp; level up</strong>
+                            <span>AI adapts to your progress</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Form panel ─────────────────────────────── -->
+        <div class="auth-form-panel">
+            <div class="auth-card">
+
+                <div class="auth-card-top-bar"></div>
+
+                <div class="auth-header">
+                    <div class="auth-icon-wrap">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h2 class="auth-title">Create account</h2>
+                    <p class="auth-subtitle">Start your VR learning journey</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}" class="auth-form">
+
+                    <div class="auth-field">
+                        <label class="auth-label">Username</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-user auth-icon"></i>
+                            <input type="text" name="username" class="auth-input"
+                                   placeholder="Choose a username" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="auth-label">Email</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-envelope auth-icon"></i>
+                            <input type="email" name="email" class="auth-input"
+                                   placeholder="you@example.com" required autocomplete="email">
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="auth-label">Password</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-lock auth-icon"></i>
+                            <input type="password" name="password" class="auth-input"
+                                   placeholder="Min. 6 characters" required autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="auth-label">Confirm Password</label>
+                        <div class="auth-input-wrap">
+                            <i class="fas fa-lock auth-icon"></i>
+                            <input type="password" name="confirm_password" class="auth-input"
+                                   placeholder="Repeat your password" required autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-btn">
+                        <span>Create account</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+
+                </form>
+
+                <p class="auth-footer">
+                    Already have an account?
+                    <a href="{{ url_for('auth.login') }}">Sign in</a>
+                </p>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* ── Auth page layout ───────────────────────────────────────── */
+.auth-page {
+    min-height: calc(100vh - 0px);
+    display: flex;
+    align-items: stretch;
+}
+
+.auth-split {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 62px);
+}
+
+/* ── Left brand panel ───────────────────────────────────────── */
+.auth-brand-panel {
+    flex: 0 0 44%;
+    background: linear-gradient(145deg, #0a0d1a 0%, #0f172a 40%, #1e1b4b 80%, #160d2e 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 3.5rem;
+}
+
+.auth-dot-grid {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.auth-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(72px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.auth-orb-1 {
+    width: 380px; height: 380px;
+    background: rgba(124,58,237,0.14);
+    top: -120px; left: -120px;
+    animation: floatOrb 10s ease-in-out infinite;
+}
+
+.auth-orb-2 {
+    width: 260px; height: 260px;
+    background: rgba(245,158,11,0.12);
+    bottom: -80px; right: -60px;
+    animation: floatOrb 13s ease-in-out infinite reverse;
+    animation-delay: -4s;
+}
+
+.auth-orb-3 {
+    width: 180px; height: 180px;
+    background: rgba(52,168,83,0.10);
+    top: 45%; left: 55%;
+    animation: floatOrb 9s ease-in-out infinite;
+    animation-delay: -7s;
+}
+
+@keyframes floatOrb {
+    0%,100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(25px, -35px) scale(1.06); }
+    66%      { transform: translate(-18px, 18px) scale(0.94); }
+}
+
+.auth-brand-content {
+    position: relative;
+    z-index: 2;
+    max-width: 360px;
+}
+
+.auth-brand-logo {
+    width: 64px;
+    height: 64px;
+    background: rgba(124,58,237,0.12);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(124,58,237,0.28);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 40px rgba(124,58,237,0.20), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.auth-brand-logo i { font-size: 1.8rem; color: #c4b5fd; }
+
+.auth-brand-name {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.04em;
+    margin-bottom: .75rem;
+    line-height: 1.2;
+}
+
+.auth-brand-tagline {
+    font-size: .925rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.65;
+    margin-bottom: 2.5rem;
+    font-weight: 400;
+}
+
+/* Steps */
+.auth-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.auth-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    animation: fadeInUp 0.5s ease both;
+}
+
+.auth-step:nth-child(1) { animation-delay: .1s; }
+.auth-step:nth-child(2) { animation-delay: .22s; }
+.auth-step:nth-child(3) { animation-delay: .34s; }
+
+.auth-step-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(245,158,11,0.15);
+    border: 1.5px solid rgba(245,158,11,0.40);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: .78rem;
+    font-weight: 800;
+    color: #f59e0b;
+}
+
+.auth-step-text {
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+.auth-step-text strong {
+    font-size: .875rem;
+    color: rgba(255,255,255,0.90);
+    font-weight: 700;
+}
+
+.auth-step-text span {
+    font-size: .80rem;
+    color: rgba(255,255,255,0.48);
+    font-weight: 400;
+}
+
+/* ── Right form panel ───────────────────────────────────────── */
+.auth-form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 2rem;
+    background: rgba(10,13,26,0.50);
+    backdrop-filter: blur(20px);
+}
+
+/* ── Auth card — dark premium ───────────────────────────────── */
+.auth-card {
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 22px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.50), 0 2px 8px rgba(0,0,0,0.30);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    animation: fadeInUp 0.4s ease both;
+}
+
+.auth-card-top-bar {
+    height: 3px;
+    background: linear-gradient(90deg, #7c3aed 0%, #f59e0b 50%, #34a853 100%);
+    background-size: 200% 100%;
+    animation: gradientSlide 4s ease-in-out infinite;
+}
+
+@keyframes gradientSlide {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.auth-header {
+    text-align: center;
+    padding: 1.5rem 2.5rem 0;
+    margin-bottom: 1.25rem;
+}
+
+.auth-icon-wrap {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto .875rem;
+    box-shadow: 0 4px 16px rgba(245,158,11,0.35);
+}
+
+.auth-icon-wrap i { font-size: 1.2rem; color: #000; }
+
+.auth-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.035em;
+    margin-bottom: .25rem;
+}
+
+.auth-subtitle {
+    color: #94a3b8;
+    font-size: .875rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    padding: 0 2.5rem;
+}
+
+.auth-field { display: flex; flex-direction: column; }
+
+.auth-label {
+    font-weight: 600;
+    font-size: .78rem;
+    color: #cbd5e1;
+    margin-bottom: .3rem;
+    letter-spacing: -0.01em;
+}
+
+.auth-input-wrap { position: relative; }
+
+.auth-icon {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: .78rem;
+    pointer-events: none;
+    transition: color 0.15s;
+}
+
+.auth-input {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 11px;
+    padding: .68rem .9rem .68rem 2.5rem;
+    font-size: .875rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    background: #1e293b;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    font-family: inherit;
+}
+
+.auth-input:focus {
+    border-color: rgba(245,158,11,0.55);
+    box-shadow: 0 0 0 3.5px rgba(245,158,11,0.12);
+    background: #253349;
+}
+
+.auth-input-wrap:focus-within .auth-icon { color: #f59e0b; }
+.auth-input::placeholder { color: #475569; font-weight: 400; }
+
+.auth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #000000;
+    border: none;
+    border-radius: 50px;
+    padding: .80rem 1.5rem;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+    transition: transform 0.18s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s;
+    margin-top: .25rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(245,158,11,0.30);
+}
+
+.auth-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 45%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 8px 28px rgba(245,158,11,0.45);
+}
+
+.auth-btn:active {
+    transform: scale(0.97);
+}
+
+.auth-footer {
+    text-align: center;
+    color: #94a3b8;
+    font-size: .875rem;
+    font-weight: 500;
+    padding: 1rem 2.5rem 1.5rem;
+    margin: 0;
+}
+
+.auth-footer a { color: #f59e0b; font-weight: 700; }
+.auth-footer a:hover { color: #fbbf24; }
+
+/* ── Light mode overrides ───────────────────────────────────── */
+[data-theme="light"] .auth-form-panel {
+    background: rgba(248,250,252,0.60);
+    backdrop-filter: blur(20px);
+}
+
+[data-theme="light"] .auth-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
+    border-color: rgba(255,255,255,0.70);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+[data-theme="light"] .auth-title { color: #0f172a; }
+[data-theme="light"] .auth-subtitle { color: #64748b; }
+[data-theme="light"] .auth-label { color: #374151; }
+
+[data-theme="light"] .auth-input {
+    background: rgba(255,255,255,0.70);
+    color: #0f172a;
+    border-color: rgba(148,163,184,0.30);
+}
+
+[data-theme="light"] .auth-input:focus { background: rgba(255,255,255,0.95); }
+[data-theme="light"] .auth-input::placeholder { color: #94a3b8; }
+[data-theme="light"] .auth-footer { color: #64748b; }
+[data-theme="light"] .auth-icon { color: #94a3b8; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .auth-brand-panel { display: none; }
+    .auth-form-panel { padding: 2rem 1.25rem; background: transparent; }
+    .auth-card { max-width: 100%; }
+}
+</style>
+{% endblock %}
