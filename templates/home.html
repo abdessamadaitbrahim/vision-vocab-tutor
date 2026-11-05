@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Home - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5" style="max-width: 1100px;">
+
+    <!-- Hero Section -->
+    <div class="hero-card card mb-4" style="animation: fadeInUp 0.4s ease 0.05s both;">
+        <div class="card-body p-4 p-md-5 text-center">
+            <span class="hero-pill mb-3 d-inline-block">
+                <i class="fas fa-vr-cardboard me-2"></i>VR Vocabulary Tutor
+            </span>
+            <h2 class="fw-bold mb-2" style="color:#ffffff; font-size:clamp(1.6rem,4vw,2.4rem); letter-spacing:-.04em;">
+                {% if recent_sessions %}Welcome back, {% else %}Welcome, {% endif %}
+                <span class="text-gold">{{ user.username }}</span>!
+            </h2>
+            <p class="mb-0" style="color:rgba(255,255,255,0.70); font-size:1rem; font-weight:500;">
+                Ready for your next vocabulary adventure? Pick an environment below and start learning!
+            </p>
+        </div>
+    </div>
+
+    <!-- Vocabulary review reminder banner -->
+    {% if vocab_due_count is defined and vocab_due_count > 0 %}
+    <div style="background:rgba(245,158,11,0.10); border:1px solid rgba(245,158,11,0.35); border-radius:14px;
+                padding:.875rem 1.25rem; margin-bottom:1.25rem; display:flex; align-items:center;
+                justify-content:space-between; gap:1rem; animation: fadeInDown .4s ease both;">
+        <div style="display:flex; align-items:center; gap:.625rem;">
+            <span style="font-size:1.3rem;">📚</span>
+            <span style="color:#f59e0b; font-weight:700; font-size:.925rem;">
+                You have <strong>{{ vocab_due_count }}</strong> word{{ 's' if vocab_due_count != 1 else '' }} to review today
+            </span>
+        </div>
+        <a href="{{ url_for('main.vocabulary_review') }}"
+           style="display:inline-flex; align-items:center; gap:.5rem;
+                  background:linear-gradient(135deg,#f59e0b,#d97706); color:#000;
+                  border-radius:50px; padding:.4rem 1.1rem; font-size:.8rem; font-weight:800;
+                  text-decoration:none; white-space:nowrap; flex-shrink:0;
+                  box-shadow:0 4px 14px rgba(245,158,11,0.30);">
+            Review Now <i class="fas fa-arrow-right" style="font-size:.7rem;"></i>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Environment Cards — React -->
+    <script>
+        window.ENV_URLS = {
+            classroom:   "{{ url_for('quiz.quiz_page', env='classroom') }}",
+            supermarket: "{{ url_for('quiz.quiz_page', env='supermarket') }}",
+            kitchen:     "{{ url_for('quiz.quiz_page', env='kitchen') }}",
+            fruits:      "{{ url_for('quiz.quiz_page', env='fruits') }}"
+        };
+    </script>
+    <div id="env-cards-root"></div>
+
+</div>
+
+<style>
+    .hero-card {
+        background: rgba(17,24,39,0.60) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(245,158,11,0.45) !important;
+        border-radius: 20px !important;
+    }
+    .hero-pill {
+        background: rgba(245,158,11,0.15);
+        border: 1px solid rgba(245,158,11,0.30);
+        color: #f59e0b;
+        border-radius: 50px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .12em;
+        padding: .3rem .9rem;
+    }
+    .text-gold {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    [data-theme="light"] .hero-card {
+        background: linear-gradient(135deg, #0a1628 0%, #0c2a4e 55%, #0ea5e9 100%) !important;
+        border-color: transparent !important;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script type="text/babel">
+{% raw %}
+    const CARDS = [
+        {
+            key: 'classroom',
+            title: 'Classroom',
+            desc: 'Learn vocabulary from everyday classroom objects — desks, books, chairs and more. Perfect for school-themed learning!',
+            emoji: '🏫',
+            accent: '#f59e0b',
+            gradTo: '#d97706',
+            btnBg: 'rgba(245,158,11,0.85)',
+            btnGlow: 'rgba(245,158,11,0.35)',
+        },
+        {
+            key: 'supermarket',
+            title: 'Supermarket',
+            desc: 'Discover food, products and shopping vocabulary in a real supermarket setting. Fun and practical for everyday life!',
+            emoji: '🛒',
+            accent: '#34a853',
+            gradTo: '#059669',
+            btnBg: 'rgba(52,168,83,0.85)',
+            btnGlow: 'rgba(52,168,83,0.35)',
+        },
+        {
+            key: 'kitchen',
+            title: 'Kitchen',
+            desc: 'Explore kitchen utensils, appliances and cooking vocabulary in a home kitchen. Perfect for food lovers and home cooks!',
+            emoji: '🍳',
+            accent: '#f97316',
+            gradTo: '#dc2626',
+            btnBg: 'rgba(239,68,68,0.85)',
+            btnGlow: 'rgba(239,68,68,0.35)',
+        },
+        {
+            key: 'fruits',
+            title: 'Fruits',
+            desc: 'Learn the names and descriptions of fresh fruits from around the world. Colorful, tasty and great for beginners!',
+            emoji: '🍎',
+            accent: '#ea4335',
+            gradTo: '#be185d',
+            btnBg: 'rgba(249,115,22,0.85)',
+            btnGlow: 'rgba(249,115,22,0.35)',
+        },
+    ];
+
+    const EnvCard = ({ card, href, delay }) => {
+        const [hovered, setHovered] = React.useState(false);
+        const { title, desc, emoji, accent, gradTo, btnBg, btnGlow } = card;
+
+        return (
+            <div className="col-md-6" style={{ animation: `fadeInUp 0.45s ease ${delay}s both` }}>
+                <a href={href} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+                    <div
+                        className="card h-100 no-hover"
+                        style={{
+                            borderRadius: '16px',
+                            padding: '2rem',
+                            background: 'rgba(17,24,39,0.40)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            border: `1px solid ${hovered ? 'rgba(245,158,11,0.85)' : 'rgba(245,158,11,0.45)'}`,
+                            boxShadow: hovered ? `0 0 24px ${accent}14` : 'none',
+                            transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
+                            transition: 'border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
+                        onMouseEnter={() => setHovered(true)}
+                        onMouseLeave={() => setHovered(false)}
+                    >
+                        <div style={{
+                            width: 64, height: 64,
+                            borderRadius: '16px',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(245,158,11,0.35)',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '1.9rem',
+                            marginBottom: '1.25rem',
+                            transform: hovered ? 'scale(1.08) rotate(-4deg)' : 'scale(1)',
+                            transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                            flexShrink: 0,
+                        }}>
+                            {emoji}
+                        </div>
+                        <h4 style={{ color: '#ffffff', fontWeight: 700, marginBottom: '.5rem', fontSize: '1.2rem', letterSpacing: '-.025em' }}>
+                            {title}
+                        </h4>
+                        <p style={{ color: '#94a3b8', lineHeight: 1.65, fontSize: '.9rem', flexGrow: 1, marginBottom: '1.5rem', fontWeight: 500 }}>
+                            {desc}
+                        </p>
+                        <div style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            background: btnBg,
+                            color: '#000000',
+                            padding: '.5rem 1.5rem',
+                            borderRadius: 50, fontWeight: 700, fontSize: '.875rem',
+                            alignSelf: 'flex-start',
+                            transform: hovered ? 'translateX(4px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                            boxShadow: hovered ? `0 6px 20px ${btnGlow}` : `0 2px 8px ${btnGlow}`,
+                        }}>
+                            <i className="fas fa-play" style={{ fontSize: '.72rem' }}></i>
+                            Start Quiz
+                        </div>
+                    </div>
+                </a>
+            </div>
+        );
+    };
+
+    const EnvCardsApp = () => {
+        const urls = window.ENV_URLS || {};
+        const delays = [0.15, 0.25, 0.35, 0.45];
+        return (
+            <div className="row g-4">
+                {CARDS.map((card, i) => (
+                    <EnvCard
+                        key={card.key}
+                        card={card}
+                        href={urls[card.key] || '#'}
+                        delay={delays[i]}
+                    />
+                ))}
+            </div>
+        );
+    };
+
+    const envRoot = document.getElementById('env-cards-root');
+    if (envRoot) {
+        ReactDOM.createRoot(envRoot).render(<EnvCardsApp />);
+    }
+{% endraw %}
+</script>
+{% endblock %}

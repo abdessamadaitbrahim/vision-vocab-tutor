@@ -1,0 +1,741 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<style>
+/* Dashboard page extras */
+.dash-header-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%) !important;
+    border: 1px solid rgba(245,158,11,0.15) !important;
+    border-radius: 20px !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.dash-header-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+}
+
+.dash-header-card .card-body { position: relative; z-index: 1; }
+
+
+.stat-card .stat-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1;
+}
+
+.stat-card .stat-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .3rem;
+}
+
+.stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto .875rem;
+}
+
+/* AI card dark treatment */
+.ai-card-icon {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #2d1b69, #3b1fa3);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(124,58,237,0.30);
+    border: 1px solid rgba(124,58,237,0.30);
+}
+
+
+.ai-no-data-box {
+    background: rgba(124,58,237,0.12);
+    border: 1px solid rgba(124,58,237,0.30);
+    border-radius: 12px;
+    padding: .875rem 1.25rem;
+    display: flex; align-items: center; gap: .75rem;
+}
+
+
+.ai-footer-border {
+    border-top: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+
+.table-num-col { color: var(--text-muted); }
+.table-score-col { color: var(--text); font-weight: 600; }
+</style>
+
+<div class="container mt-4 mb-5">
+
+    <!-- Premium header card -->
+    <div class="card dash-header-card mb-4" style="animation: fadeInUp 0.35s ease both;">
+        <div class="card-body p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <p class="text-uppercase fw-semibold mb-1" style="color:rgba(255,255,255,0.60); font-size:.72rem; letter-spacing:.14em;">
+                    <i class="fas fa-chart-line me-2"></i>Analytics
+                </p>
+                <h3 class="fw-bold mb-1" style="color:#ffffff; letter-spacing:-.03em; font-size:1.6rem;">
+                    My Progress
+                </h3>
+                <p class="mb-0" style="color:rgba(255,255,255,0.65); font-size:.875rem; font-weight:500;">
+                    Your full learning performance overview
+                </p>
+            </div>
+            <a href="{{ url_for('main.home') }}"
+               style="display:inline-flex; align-items:center; gap:.5rem;
+                      background:rgba(255,255,255,0.10); color:#fff; border:1px solid rgba(255,255,255,0.20);
+                      border-radius:50px; padding:.5rem 1.25rem; font-size:.85rem; font-weight:700;
+                      text-decoration:none; backdrop-filter:blur(8px);
+                      transition:background .18s, border-color .18s;">
+                <i class="fas fa-arrow-left"></i>Home
+            </a>
+        </div>
+    </div>
+
+    {% if not has_data %}
+    <!-- Empty State -->
+    <div class="card text-center py-5" style="animation: fadeInUp 0.4s ease 0.1s both;">
+        <div class="card-body py-4">
+            <div style="font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.20));">📊</div>
+            <h4 class="fw-bold mt-2 mb-2" style="color:var(--text); letter-spacing:-.025em;">No data yet</h4>
+            <p style="color:var(--text-muted); font-weight:500; max-width:340px; margin:0 auto 1.25rem;">
+                Complete your first quiz session to unlock your full analytics dashboard.
+            </p>
+            <a href="{{ url_for('main.home') }}" class="btn btn-primary px-4">
+                <i class="fas fa-play me-2"></i>Start a Session
+            </a>
+        </div>
+    </div>
+
+    {% else %}
+
+    <!-- ── STATS CARDS — React ───────────────────────────────────────────────── -->
+    <script>
+        window.STATS_DATA = {
+            totalSessions: {{ total_sessions }},
+            avgScore:      {{ avg_score }},
+            level:         "{{ user.level | capitalize }}",
+            totalPoints:   {{ total_points }},
+            totalCorrect:  {{ total_correct }},
+            bestScore:     {{ best_score }}
+        };
+    </script>
+    <div id="stats-root"></div>
+
+    <!-- ── AI PREDICTION CARD ───────────────────────────────────────────────── -->
+    <div class="card mb-4" style="border-top: 4px solid #7c3aed !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center g-4">
+
+                <!-- Left: icon + title -->
+                <div class="col-auto">
+                    <div class="ai-card-icon">
+                        <i class="fas fa-brain" style="font-size:1.5rem; color:#a78bfa;"></i>
+                    </div>
+                </div>
+
+                <div class="col">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h6 class="fw-bold mb-0" style="color:var(--text);">AI Predicts Your Next Level</h6>
+                    </div>
+                    <p class="mb-0" style="color:var(--text-muted); font-size:.85rem; font-weight:500;">Based on your performance pattern across all sessions</p>
+                </div>
+
+                {% if total_sessions < 2 %}
+                <!-- Not enough data -->
+                <div class="col-12 col-md-auto">
+                    <div class="ai-no-data-box">
+                        <i class="fas fa-hourglass-half" style="color:#a78bfa; font-size:1.1rem;"></i>
+                        <div>
+                            <div style="font-weight:700; color:#c4b5fd; font-size:.875rem;">Need more data</div>
+                            <div style="color:#a78bfa; font-size:.78rem; font-weight:500;">Complete at least 2 sessions to activate prediction</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% else %}
+                <!-- Prediction result -->
+                <div class="col-12">
+                    <div class="row g-3 align-items-center">
+
+                        <!-- Predicted level badge -->
+                        <div class="col-auto">
+                            <div style="text-align:center;">
+                                <div style="font-size:.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; margin-bottom:.5rem;">Predicted Level</div>
+                                {% if predicted_level == 'advanced' %}
+                                <span style="background:rgba(52,168,83,0.15); color:#4ade80; border:2px solid rgba(52,168,83,0.40); border-radius:50px; padding:.5rem 1.5rem; font-size:1rem; font-weight:800; letter-spacing:-.01em;">
+                                    <i class="fas fa-circle-check me-1"></i>Advanced
+                                </span>
+                                {% elif predicted_level == 'intermediate' %}
+                                <span style="background:rgba(245,158,11,0.15); color:#fbbf24; border:2px solid rgba(245,158,11,0.40); border-radius:50px; padding:.5rem 1.5rem; font-size:1rem; font-weight:800; letter-spacing:-.01em;">
+                                    <i class="fas fa-circle-half-stroke me-1"></i>Intermediate
+                                </span>
+                                {% else %}
+                                <span style="background:rgba(234,67,53,0.15); color:#f87171; border:2px solid rgba(234,67,53,0.40); border-radius:50px; padding:.5rem 1.5rem; font-size:1rem; font-weight:800; letter-spacing:-.01em;">
+                                    <i class="fas fa-circle me-1"></i>Beginner
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Confidence bar -->
+                        <div class="col">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span style="font-size:.8rem; font-weight:700; color:var(--text-muted);">Model Confidence</span>
+                                <span style="font-size:.875rem; font-weight:800; color:#a78bfa;">{{ ml_confidence }}%</span>
+                            </div>
+                            <div style="background:rgba(124,58,237,0.20); border-radius:10px; height:10px; overflow:hidden;">
+                                <div style="width:{{ ml_confidence }}%; height:100%; border-radius:10px;
+                                     background: linear-gradient(90deg, #8b5cf6, #7c3aed);
+                                     transition: width .8s cubic-bezier(0.4,0,0.2,1);"></div>
+                            </div>
+                            <div style="margin-top:.625rem; font-size:.825rem; font-weight:600;
+                                 {% if predicted_level == 'advanced' %}color:#4ade80;
+                                 {% elif predicted_level == 'intermediate' %}color:#fbbf24;
+                                 {% else %}color:#f87171;{% endif %}">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                {% if predicted_level == 'advanced' %}
+                                    Excellent progress! You are ready for advanced challenges.
+                                {% elif predicted_level == 'intermediate' %}
+                                    Good job! Keep practicing to reach advanced level.
+                                {% else %}
+                                    Keep going! Consistency is the key to improvement.
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Footer note -->
+            <div class="mt-3 pt-3 ai-footer-border">
+                <small style="color:var(--text-muted); font-weight:500;">
+                    <i class="fas fa-flask me-1" style="color:#a78bfa;"></i>
+                    Powered by AI &mdash; trained on your {{ total_sessions }} session{{ 's' if total_sessions != 1 else '' }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── VOCABULARY PROGRESS ──────────────────────────────────────────────── -->
+    <div class="card mb-4" style="border-top: 4px solid #34a853 !important;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:44px;height:44px;background:rgba(52,168,83,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(52,168,83,0.25);">
+                        <i class="fas fa-book-open" style="color:#4ade80;font-size:1.1rem;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color:var(--text);">Vocabulary Progress</h6>
+                        <small style="color:var(--text-muted);">Words tracked with spaced repetition</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('main.vocabulary') }}"
+                   style="display:inline-flex; align-items:center; gap:.4rem;
+                          color:#4ade80; font-size:.85rem; font-weight:700; text-decoration:none;
+                          border:1px solid rgba(52,168,83,0.30); border-radius:50px; padding:.35rem 1rem;
+                          background:rgba(52,168,83,0.08);">
+                    View Vocabulary Bank <i class="fas fa-arrow-right" style="font-size:.7rem;"></i>
+                </a>
+            </div>
+            <div class="row g-3">
+                <div class="col-4">
+                    <div style="text-align:center; padding:.75rem; background:rgba(245,158,11,0.06); border-radius:12px; border:1px solid rgba(245,158,11,0.15);">
+                        <div style="font-size:1.6rem; font-weight:800; color:#f59e0b; line-height:1;">{{ vocab_total }}</div>
+                        <div style="font-size:.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:.3rem;">Total Learned</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="text-align:center; padding:.75rem; background:rgba(52,168,83,0.06); border-radius:12px; border:1px solid rgba(52,168,83,0.15);">
+                        <div style="font-size:1.6rem; font-weight:800; color:#4ade80; line-height:1;">{{ vocab_mastered }}</div>
+                        <div style="font-size:.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:.3rem;">Mastered</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div style="text-align:center; padding:.75rem; background:{% if vocab_due > 0 %}rgba(234,67,53,0.06){% else %}rgba(52,168,83,0.06){% endif %}; border-radius:12px; border:1px solid {% if vocab_due > 0 %}rgba(234,67,53,0.20){% else %}rgba(52,168,83,0.15){% endif %};">
+                        <div style="font-size:1.6rem; font-weight:800; color:{% if vocab_due > 0 %}#f87171{% else %}#4ade80{% endif %}; line-height:1;">{{ vocab_due }}</div>
+                        <div style="font-size:.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:.3rem;">To Review Today</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PROGRESS BY ENVIRONMENT ─────────────────────────────────────────── -->
+    <div class="card mb-4" style="border-top: 4px solid #f59e0b !important;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:44px;height:44px;background:rgba(245,158,11,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,158,11,0.25);">
+                    <i class="fas fa-map-marked-alt" style="color:#f59e0b;font-size:1.1rem;"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color:var(--text);">Progress by Environment</h6>
+                    <small style="color:var(--text-muted);">Score, level and AI prediction per environment</small>
+                </div>
+            </div>
+            <div class="row g-3">
+
+                <!-- Classroom — blue border -->
+                {% set cls = env_stats.classroom %}
+                <div class="col-6 col-lg-3">
+                    <div class="card h-100" style="border-top:3px solid #0891b2 !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size:1.2rem;">🏫</span>
+                                <span class="fw-bold" style="font-size:.85rem;color:var(--text);">Classroom</span>
+                            </div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#0891b2;line-height:1;">{{ cls.avg_score }}%</div>
+                            <div style="font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Avg score • {{ cls.sessions }} sessions</div>
+                            <div style="background:rgba(8,145,178,0.15);border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:{{ cls.avg_score }}%;height:100%;background:#0891b2;border-radius:6px;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size:.72rem;font-weight:700;color:#0891b2;">
+                                    <i class="fas fa-signal me-1"></i>{{ cls.level | capitalize }}
+                                </span>
+                                <span style="font-size:.68rem;color:var(--text-muted);">{{ cls.points }} pts</span>
+                            </div>
+                            {% if total_sessions >= 2 %}
+                            <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
+                                <div style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">AI Next</div>
+                                <div style="font-size:.78rem;font-weight:700;color:#0891b2;">{{ cls.predicted_level | capitalize }} <span style="color:var(--text-muted);font-weight:500;">({{ cls.confidence }}%)</span></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kitchen — red border -->
+                {% set kit = env_stats.kitchen %}
+                <div class="col-6 col-lg-3">
+                    <div class="card h-100" style="border-top:3px solid #ea4335 !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size:1.2rem;">🍳</span>
+                                <span class="fw-bold" style="font-size:.85rem;color:var(--text);">Kitchen</span>
+                            </div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#ea4335;line-height:1;">{{ kit.avg_score }}%</div>
+                            <div style="font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Avg score • {{ kit.sessions }} sessions</div>
+                            <div style="background:rgba(234,67,53,0.15);border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:{{ kit.avg_score }}%;height:100%;background:#ea4335;border-radius:6px;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size:.72rem;font-weight:700;color:#ea4335;">
+                                    <i class="fas fa-signal me-1"></i>{{ kit.level | capitalize }}
+                                </span>
+                                <span style="font-size:.68rem;color:var(--text-muted);">{{ kit.points }} pts</span>
+                            </div>
+                            {% if total_sessions >= 2 %}
+                            <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
+                                <div style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">AI Next</div>
+                                <div style="font-size:.78rem;font-weight:700;color:#ea4335;">{{ kit.predicted_level | capitalize }} <span style="color:var(--text-muted);font-weight:500;">({{ kit.confidence }}%)</span></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supermarket — green border -->
+                {% set sup = env_stats.supermarket %}
+                <div class="col-6 col-lg-3">
+                    <div class="card h-100" style="border-top:3px solid #34a853 !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size:1.2rem;">🛒</span>
+                                <span class="fw-bold" style="font-size:.85rem;color:var(--text);">Supermarket</span>
+                            </div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#34a853;line-height:1;">{{ sup.avg_score }}%</div>
+                            <div style="font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Avg score • {{ sup.sessions }} sessions</div>
+                            <div style="background:rgba(52,168,83,0.15);border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:{{ sup.avg_score }}%;height:100%;background:#34a853;border-radius:6px;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size:.72rem;font-weight:700;color:#34a853;">
+                                    <i class="fas fa-signal me-1"></i>{{ sup.level | capitalize }}
+                                </span>
+                                <span style="font-size:.68rem;color:var(--text-muted);">{{ sup.points }} pts</span>
+                            </div>
+                            {% if total_sessions >= 2 %}
+                            <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
+                                <div style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">AI Next</div>
+                                <div style="font-size:.78rem;font-weight:700;color:#34a853;">{{ sup.predicted_level | capitalize }} <span style="color:var(--text-muted);font-weight:500;">({{ sup.confidence }}%)</span></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fruits — orange border -->
+                {% set frt = env_stats.fruits %}
+                <div class="col-6 col-lg-3">
+                    <div class="card h-100" style="border-top:3px solid #f97316 !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size:1.2rem;">🍎</span>
+                                <span class="fw-bold" style="font-size:.85rem;color:var(--text);">Fruits</span>
+                            </div>
+                            <div style="font-size:1.4rem;font-weight:800;color:#f97316;line-height:1;">{{ frt.avg_score }}%</div>
+                            <div style="font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">Avg score • {{ frt.sessions }} sessions</div>
+                            <div style="background:rgba(249,115,22,0.15);border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:{{ frt.avg_score }}%;height:100%;background:#f97316;border-radius:6px;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size:.72rem;font-weight:700;color:#f97316;">
+                                    <i class="fas fa-signal me-1"></i>{{ frt.level | capitalize }}
+                                </span>
+                                <span style="font-size:.68rem;color:var(--text-muted);">{{ frt.points }} pts</span>
+                            </div>
+                            {% if total_sessions >= 2 %}
+                            <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border);">
+                                <div style="font-size:.68rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">AI Next</div>
+                                <div style="font-size:.78rem;font-weight:700;color:#f97316;">{{ frt.predicted_level | capitalize }} <span style="color:var(--text-muted);font-weight:500;">({{ frt.confidence }}%)</span></div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CHART + LEVEL BREAKDOWN ──────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+
+        <!-- Score Evolution Chart -->
+        <div class="col-lg-8">
+            <div class="card shadow h-100">
+                <div class="card-header border-0 pb-0 pt-3 px-4" style="background: transparent !important;">
+                    <h6 class="fw-bold mb-0" style="color:var(--text);">
+                        <i class="fas fa-chart-line me-2" style="color:#f59e0b;"></i>Score Evolution
+                    </h6>
+                    <small style="color:var(--text-muted);">Score % across all sessions</small>
+                </div>
+                <div class="card-body px-3 pb-3 pt-2" style="background: transparent !important;">
+                    <canvas id="scoreChart" style="max-height: 280px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Level Breakdown -->
+        <div class="col-lg-4">
+            <div class="card shadow h-100">
+                <div class="card-header border-0 pb-0 pt-3 px-4" style="background: transparent !important;">
+                    <h6 class="fw-bold mb-0" style="color:var(--text);">
+                        <i class="fas fa-layer-group me-2" style="color:var(--text-muted);"></i>Level Distribution
+                    </h6>
+                    <small style="color:var(--text-muted);">Sessions played per level</small>
+                </div>
+                <div class="card-body d-flex flex-column justify-content-center gap-3 px-4" style="background: transparent !important;">
+
+                    <!-- Beginner -->
+                    {% set b_pct = ((level_counts.beginner / total_sessions) * 100) | round(1) %}
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold" style="color:#f87171;">
+                                <i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Beginner
+                            </span>
+                            <small style="color:var(--text-muted);">{{ level_counts.beginner }} ({{ b_pct }}%)</small>
+                        </div>
+                        <div class="progress dashboard-progress" style="height:8px;">
+                            <div class="progress-bar" style="width:{{ b_pct }}%; background:#ea4335;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Intermediate -->
+                    {% set i_pct = ((level_counts.intermediate / total_sessions) * 100) | round(1) %}
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold" style="color:#fbbf24;">
+                                <i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Intermediate
+                            </span>
+                            <small style="color:var(--text-muted);">{{ level_counts.intermediate }} ({{ i_pct }}%)</small>
+                        </div>
+                        <div class="progress dashboard-progress" style="height:8px;">
+                            <div class="progress-bar" style="width:{{ i_pct }}%; background:#fbbc04;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced -->
+                    {% set a_pct = ((level_counts.advanced / total_sessions) * 100) | round(1) %}
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="fw-semibold" style="color:#4ade80;">
+                                <i class="fas fa-circle me-1" style="font-size:.55rem;"></i>Advanced
+                            </span>
+                            <small style="color:var(--text-muted);">{{ level_counts.advanced }} ({{ a_pct }}%)</small>
+                        </div>
+                        <div class="progress dashboard-progress" style="height:8px;">
+                            <div class="progress-bar" style="width:{{ a_pct }}%; background:#34a853;"></div>
+                        </div>
+                    </div>
+
+                    <hr class="my-1" style="border-color:var(--border);">
+                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                        <span class="badge px-3 py-2" style="background:rgba(234,67,53,0.15); color:#f87171; border-radius:20px;">{{ level_counts.beginner }} Beginner</span>
+                        <span class="badge px-3 py-2" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-radius:20px;">{{ level_counts.intermediate }} Intermediate</span>
+                        <span class="badge px-3 py-2" style="background:rgba(52,168,83,0.15); color:#4ade80; border-radius:20px;">{{ level_counts.advanced }} Advanced</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── RECENT SESSIONS TABLE ─────────────────────────────────────────────── -->
+    <div class="card shadow">
+        <div class="card-header border-0 pt-3 pb-2 px-4 d-flex justify-content-between align-items-center" style="background: transparent !important;">
+            <div>
+                <h6 class="fw-bold mb-0" style="color:var(--text);">
+                    <i class="fas fa-history me-2" style="color:var(--text-muted);"></i>Recent Sessions
+                </h6>
+                <small style="color:var(--text-muted);">Last 10 sessions</small>
+            </div>
+            <span class="badge px-3 py-2" style="background:rgba(245,158,11,0.12); color:#f59e0b; border-radius:20px; border:1px solid rgba(245,158,11,0.25);">{{ total_sessions }} total</span>
+        </div>
+        <div class="card-body p-0" style="background: transparent !important;">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 dashboard-table">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">#</th>
+                            <th>Date</th>
+                            <th>Level</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in recent_sessions %}
+                        <tr>
+                            <td class="ps-4">
+                                <small class="table-num-col">{{ total_sessions - loop.index0 }}</small>
+                            </td>
+                            <td>
+                                <small>
+                                    <i class="fas fa-calendar-alt me-1" style="color:var(--text-muted);"></i>
+                                    {{ s.created_at.strftime('%d %b %Y') }}
+                                </small><br>
+                                <small style="color:var(--text-muted);">{{ s.created_at.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                {% if s.get_percentage() >= 80 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(52,168,83,0.15); color:#4ade80; border-radius:20px;">Advanced</span>
+                                {% elif s.get_percentage() >= 50 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-radius:20px;">Intermediate</span>
+                                {% else %}
+                                    <span class="badge px-2 py-1" style="background:rgba(234,67,53,0.15); color:#f87171; border-radius:20px;">Beginner</span>
+                                {% endif %}
+                            </td>
+                            <td class="table-score-col">{{ s.score }} / {{ s.total_questions }}</td>
+                            <td style="min-width: 140px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress dashboard-progress flex-grow-1" style="height:8px;">
+                                        <div class="progress-bar"
+                                            style="width:{{ s.get_percentage() }}%;
+                                            background:{% if s.get_percentage() >= 80 %}#34a853{% elif s.get_percentage() >= 50 %}#fbbc04{% else %}#ea4335{% endif %};">
+                                        </div>
+                                    </div>
+                                    <small class="fw-semibold" style="min-width:38px; color:var(--text-muted);">
+                                        {{ s.get_percentage() | round(1) }}%
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if s.get_percentage() >= 80 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(52,168,83,0.15); color:#4ade80; border:1px solid rgba(52,168,83,0.35); border-radius:20px;">
+                                        <i class="fas fa-arrow-up me-1"></i>Excellent
+                                    </span>
+                                {% elif s.get_percentage() >= 50 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); border-radius:20px;">
+                                        <i class="fas fa-minus me-1"></i>Good
+                                    </span>
+                                {% else %}
+                                    <span class="badge px-2 py-1" style="background:rgba(234,67,53,0.15); color:#f87171; border:1px solid rgba(234,67,53,0.35); border-radius:20px;">
+                                        <i class="fas fa-arrow-down me-1"></i>Keep going
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}{# end has_data #}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if has_data %}
+<script type="text/babel">
+{% raw %}
+    const useCountUp = (target, duration, delay) => {
+        const [val, setVal] = React.useState(0);
+        React.useEffect(() => {
+            const t = setTimeout(() => {
+                const start = Date.now();
+                const tick = () => {
+                    const p = Math.min((Date.now() - start) / duration, 1);
+                    setVal(Math.round((1 - Math.pow(1 - p, 3)) * target));
+                    if (p < 1) requestAnimationFrame(tick);
+                };
+                requestAnimationFrame(tick);
+            }, delay);
+            return () => clearTimeout(t);
+        }, [target]);
+        return val;
+    };
+
+    const StatCard = ({ icon, value, label, iconColor, iconBg, borderColor, suffix, delay, isText }) => {
+        const num = parseFloat(value) || 0;
+        const count = useCountUp(isText ? 0 : num, 1200, delay);
+        return (
+            <div className="col-6 col-md-4 col-lg-2"
+                 style={{ animation: `fadeInUp 0.4s ease ${(delay / 1000) + 0.1}s both` }}>
+                <div className="card stat-card text-center p-3 h-100"
+                     style={{ borderTop: `3px solid ${borderColor}` }}>
+                    <div className="stat-icon-wrap" style={{ background: iconBg, boxShadow: `0 3px 10px ${borderColor}28` }}>
+                        <i className={`fas ${icon}`} style={{ color: iconColor, fontSize: '1.1rem' }}></i>
+                    </div>
+                    <div className="stat-num">
+                        {isText ? value : count}{suffix || ''}
+                    </div>
+                    <div className="stat-label">{label}</div>
+                </div>
+            </div>
+        );
+    };
+
+    const StatsApp = () => {
+        const d = window.STATS_DATA || {};
+        return (
+            <div className="row g-3 mb-4">
+                <StatCard icon="fa-gamepad"      value={d.totalSessions} label="Sessions"        iconColor="#f59e0b" iconBg="rgba(245,158,11,0.12)"  borderColor="#f59e0b" delay={0}   />
+                <StatCard icon="fa-percent"      value={d.avgScore}      label="Avg Score"       iconColor="#7c3aed" iconBg="rgba(124,58,237,0.12)"  borderColor="#7c3aed" delay={120} suffix="%" />
+                <StatCard icon="fa-signal"       value={d.level}         label="Level"           iconColor="#f59e0b" iconBg="rgba(245,158,11,0.12)"  borderColor="#f59e0b" delay={240} isText={true} />
+                <StatCard icon="fa-star"         value={d.totalPoints}   label="Total Points"    iconColor="#34a853" iconBg="rgba(52,168,83,0.12)"   borderColor="#34a853" delay={360} />
+                <StatCard icon="fa-check-circle" value={d.totalCorrect}  label="Correct Answers" iconColor="#0891b2" iconBg="rgba(8,145,178,0.12)"   borderColor="#0891b2" delay={480} />
+                <StatCard icon="fa-trophy"       value={d.bestScore}     label="Best Session"    iconColor="#ea4335" iconBg="rgba(234,67,53,0.12)"   borderColor="#ea4335" delay={600} suffix="%" />
+            </div>
+        );
+    };
+
+    const statsRoot = document.getElementById('stats-root');
+    if (statsRoot) ReactDOM.createRoot(statsRoot).render(<StatsApp />);
+{% endraw %}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    const labels   = {{ chart_labels | safe }};
+    const scores   = {{ chart_scores | safe }};
+    const levels   = {{ chart_levels | safe }};
+    const ptColors = {{ point_colors | safe }};
+
+    const ctx = document.getElementById("scoreChart").getContext("2d");
+    const gradient = ctx.createLinearGradient(0, 0, 0, 280);
+    gradient.addColorStop(0, "rgba(245,158,11,0.22)");
+    gradient.addColorStop(1, "rgba(245,158,11,0)");
+
+    const chartAreaBg = {
+        id: "customCanvasBackground",
+        beforeDraw(chart) {
+            const ctx = chart.canvas.getContext("2d");
+            ctx.save();
+            ctx.globalCompositeOperation = "destination-over";
+            ctx.fillStyle = "rgba(255,255,255,0.02)";
+            ctx.fillRect(0, 0, chart.width, chart.height);
+            ctx.restore();
+        }
+    };
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Score %",
+                data: scores,
+                borderColor: "#f59e0b",
+                backgroundColor: gradient,
+                pointBackgroundColor: ptColors,
+                pointBorderColor: "#0f172a",
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                pointHoverRadius: 9,
+                tension: 0.35,
+                fill: true,
+                borderWidth: 2.5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: (items) => `Session ${items[0].label}`,
+                        label: (item) => {
+                            const lvl = levels[item.dataIndex];
+                            const emoji = lvl === "advanced" ? "🟢" : lvl === "intermediate" ? "🟡" : "🔴";
+                            return ` ${item.parsed.y}%  ${emoji} ${lvl.charAt(0).toUpperCase() + lvl.slice(1)}`;
+                        }
+                    },
+                    backgroundColor: "#1e293b",
+                    titleColor: "#94a3b8",
+                    bodyColor: "#e2e8f0",
+                    padding: 12,
+                    cornerRadius: 10,
+                    borderColor: "rgba(255,255,255,0.10)",
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: "Session", color: "#94a3b8", font: { size: 11, family: "Inter" } },
+                    grid: { color: "rgba(255,255,255,0.06)" },
+                    ticks: { color: "#94a3b8", font: { size: 11 } }
+                },
+                y: {
+                    min: 0, max: 100,
+                    title: { display: true, text: "Score %", color: "#94a3b8", font: { size: 11, family: "Inter" } },
+                    grid: { color: "rgba(255,255,255,0.06)" },
+                    ticks: {
+                        color: "#94a3b8",
+                        font: { size: 11 },
+                        callback: (v) => v + "%"
+                    }
+                }
+            }
+        },
+        plugins: [chartAreaBg]
+    });
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+
+{% block title %}My Vocabulary Bank - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<style>
+/* ── Vocabulary page styles ───────────────────────────────────────────────── */
+.vocab-header-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%) !important;
+    border: 1px solid rgba(245,158,11,0.15) !important;
+    border-radius: 20px !important;
+    position: relative;
+    overflow: hidden;
+}
+.vocab-header-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+}
+.vocab-header-card .card-body { position: relative; z-index: 1; }
+
+.stat-card .stat-num {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1;
+}
+.stat-card .stat-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .3rem;
+}
+.stat-icon-wrap {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto .875rem;
+}
+
+/* Word chip */
+.word-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: rgba(17,24,39,0.60);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    padding: .5rem .875rem;
+    transition: border-color .2s, transform .2s;
+}
+.word-chip:hover {
+    border-color: rgba(245,158,11,0.60);
+    transform: translateY(-2px);
+}
+.word-chip .chip-word {
+    font-weight: 700;
+    font-size: .9rem;
+    color: #f59e0b;
+}
+
+/* Env badge colours */
+.env-badge { font-size: .65rem; font-weight: 700; border-radius: 6px; padding: .15rem .45rem; }
+.env-classroom   { background: rgba(8,145,178,0.20);   color: #22d3ee; }
+.env-kitchen     { background: rgba(234,67,53,0.20);   color: #f87171; }
+.env-supermarket { background: rgba(52,168,83,0.20);   color: #4ade80; }
+.env-fruits      { background: rgba(249,115,22,0.20);  color: #fb923c; }
+
+/* Status badges */
+.badge-mastered { background: rgba(52,168,83,0.15); color: #4ade80; border: 1px solid rgba(52,168,83,0.30); border-radius: 50px; padding: .2rem .65rem; font-size: .7rem; font-weight: 700; }
+.badge-due      { background: rgba(234,67,53,0.15); color: #f87171; border: 1px solid rgba(234,67,53,0.30); border-radius: 50px; padding: .2rem .65rem; font-size: .7rem; font-weight: 700; animation: pulse-red 1.8s ease-in-out infinite; }
+.badge-learning { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.30); border-radius: 50px; padding: .2rem .65rem; font-size: .7rem; font-weight: 700; }
+
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(234,67,53,0); }
+    50%       { box-shadow: 0 0 0 4px rgba(234,67,53,0.20); }
+}
+
+/* All-caught-up box */
+.caught-up-box {
+    background: rgba(52,168,83,0.08);
+    border: 1px solid rgba(52,168,83,0.25);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Table */
+.vocab-table th { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); border-bottom: 1px solid var(--border) !important; border-top: none !important; }
+.vocab-table td { font-size: .875rem; vertical-align: middle; border-bottom: 1px solid rgba(255,255,255,0.04) !important; border-top: none !important; }
+.vocab-table tr:hover td { background: rgba(255,255,255,0.025); }
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 1100px;">
+
+    <!-- Header card -->
+    <div class="card vocab-header-card mb-4" style="animation: fadeInUp 0.35s ease both;">
+        <div class="card-body p-4 d-flex align-items-center justify-content-between">
+            <div>
+                <p class="text-uppercase fw-semibold mb-1" style="color:rgba(255,255,255,0.60); font-size:.72rem; letter-spacing:.14em;">
+                    <i class="fas fa-book-open me-2" style="color:#f59e0b;"></i>Spaced Repetition
+                </p>
+                <h3 class="fw-bold mb-1" style="color:#ffffff; letter-spacing:-.03em; font-size:1.6rem;">
+                    My Vocabulary Bank
+                </h3>
+                <p class="mb-0" style="color:rgba(255,255,255,0.65); font-size:.875rem; font-weight:500;">
+                    SM-2 algorithm tracks your words and schedules smart reviews
+                </p>
+            </div>
+            <a href="{{ url_for('main.home') }}"
+               style="display:inline-flex; align-items:center; gap:.5rem;
+                      background:rgba(255,255,255,0.10); color:#fff; border:1px solid rgba(255,255,255,0.20);
+                      border-radius:50px; padding:.5rem 1.25rem; font-size:.85rem; font-weight:700;
+                      text-decoration:none; backdrop-filter:blur(8px);">
+                <i class="fas fa-arrow-left"></i>Home
+            </a>
+        </div>
+    </div>
+
+    <!-- ── 3 stat cards ─────────────────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+
+        <!-- Total Words — gold border -->
+        <div class="col-4">
+            <div class="card stat-card text-center p-3" style="border-top: 4px solid #f59e0b !important; animation: fadeInUp .4s ease .05s both;">
+                <div class="stat-icon-wrap" style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25);">
+                    <i class="fas fa-book" style="color:#f59e0b;"></i>
+                </div>
+                <div class="stat-num">{{ total_words }}</div>
+                <div class="stat-label">Total Words</div>
+            </div>
+        </div>
+
+        <!-- Mastered — green border -->
+        <div class="col-4">
+            <div class="card stat-card text-center p-3" style="border-top: 4px solid #34a853 !important; animation: fadeInUp .4s ease .12s both;">
+                <div class="stat-icon-wrap" style="background:rgba(52,168,83,0.12); border:1px solid rgba(52,168,83,0.25);">
+                    <i class="fas fa-star" style="color:#4ade80;"></i>
+                </div>
+                <div class="stat-num" style="color:#4ade80;">{{ mastered_count }}</div>
+                <div class="stat-label">Mastered</div>
+            </div>
+        </div>
+
+        <!-- To Review — purple border, red if > 0 -->
+        <div class="col-4">
+            {% if to_review_count > 0 %}
+            <a href="{{ url_for('main.vocabulary_review') }}" style="text-decoration:none; display:block; height:100%;">
+            {% endif %}
+            <div class="card stat-card text-center p-3" style="border-top: 4px solid #7c3aed !important; animation: fadeInUp .4s ease .19s both;
+                 {% if to_review_count > 0 %}cursor:pointer; transition:border-color .2s;{% endif %}">
+                <div class="stat-icon-wrap" style="background:rgba(124,58,237,0.12); border:1px solid rgba(124,58,237,0.25);">
+                    <i class="fas fa-{% if to_review_count > 0 %}play{% else %}clock{% endif %}" style="color:#a78bfa;"></i>
+                </div>
+                <div class="stat-num" style="color:{% if to_review_count > 0 %}#f87171{% else %}var(--text){% endif %};">
+                    {{ to_review_count }}
+                </div>
+                <div class="stat-label">
+                    {% if to_review_count > 0 %}Start Review ▶{% else %}To Review Today{% endif %}
+                </div>
+            </div>
+            {% if to_review_count > 0 %}</a>{% endif %}
+        </div>
+
+    </div>
+
+    <!-- ── Due for review ───────────────────────────────────────────────────── -->
+    <div class="card mb-4" style="border-top: 4px solid #7c3aed !important; animation: fadeInUp .4s ease .22s both;">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:44px;height:44px;background:rgba(124,58,237,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(124,58,237,0.25);">
+                        <i class="fas fa-redo" style="color:#a78bfa;font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0" style="color:var(--text);">Due for Review Today</h6>
+                        <small style="color:var(--text-muted);">Words scheduled for spaced repetition</small>
+                    </div>
+                </div>
+                {% if words_due %}
+                <a href="{{ url_for('main.vocabulary_review') }}"
+                   style="display:inline-flex; align-items:center; gap:.5rem;
+                          background:linear-gradient(135deg,#7c3aed,#6d28d9); color:#fff;
+                          border-radius:50px; padding:.45rem 1.25rem; font-size:.85rem; font-weight:700;
+                          text-decoration:none; box-shadow:0 4px 14px rgba(124,58,237,0.35);">
+                    <i class="fas fa-play" style="font-size:.7rem;"></i>Start Review
+                </a>
+                {% endif %}
+            </div>
+
+            {% if not words_due %}
+            <div class="caught-up-box">
+                <div style="font-size:2.5rem; margin-bottom:.75rem;">✅</div>
+                <div style="font-weight:700; color:#4ade80; font-size:1rem; margin-bottom:.25rem;">All caught up!</div>
+                <div style="color:var(--text-muted); font-size:.875rem; font-weight:500;">No words to review right now. Come back after your next quiz!</div>
+            </div>
+            {% else %}
+            <div class="d-flex flex-wrap gap-2">
+                {% for vw in words_due %}
+                <div class="word-chip">
+                    <span class="chip-word">{{ vw.word }}</span>
+                    <span class="env-badge env-{{ vw.environment }}">{{ vw.environment }}</span>
+                    {% if vw.wrong_count > vw.correct_count %}
+                    <span title="Needs practice" style="font-size:.8rem;">🔄</span>
+                    {% else %}
+                    <span title="Good progress" style="font-size:.8rem;">⭐</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- ── Progress by environment ──────────────────────────────────────────── -->
+    <div class="card mb-4" style="border-top: 4px solid #f59e0b !important; animation: fadeInUp .4s ease .28s both;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:44px;height:44px;background:rgba(245,158,11,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,158,11,0.25);">
+                    <i class="fas fa-map-marked-alt" style="color:#f59e0b;font-size:1.1rem;"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color:var(--text);">Progress by Environment</h6>
+                    <small style="color:var(--text-muted);">Words learned and mastered per environment</small>
+                </div>
+            </div>
+            <div class="row g-3">
+
+                {% set env_cfg = [
+                    ('classroom',   '🏫', '#0891b2', 'rgba(8,145,178,0.15)'),
+                    ('kitchen',     '🍳', '#ea4335', 'rgba(234,67,53,0.15)'),
+                    ('supermarket', '🛒', '#34a853', 'rgba(52,168,83,0.15)'),
+                    ('fruits',      '🍎', '#f97316', 'rgba(249,115,22,0.15)'),
+                ] %}
+
+                {% for env_key, emoji, color, bg in env_cfg %}
+                {% set stats = words_by_env[env_key] %}
+                <div class="col-6 col-lg-3">
+                    <div class="card h-100" style="border-top: 3px solid {{ color }} !important;">
+                        <div class="card-body p-3">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span style="font-size:1.2rem;">{{ emoji }}</span>
+                                <span class="fw-bold" style="font-size:.85rem;color:var(--text);">{{ env_key | capitalize }}</span>
+                            </div>
+                            <div style="font-size:1.4rem;font-weight:800;color:{{ color }};line-height:1;">
+                                {{ stats.total }}
+                            </div>
+                            <div style="font-size:.7rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem;">
+                                words total
+                            </div>
+                            {% if stats.total > 0 %}
+                            <div style="background:{{ bg }};border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:{{ ((stats.mastered / stats.total) * 100) | round | int }}%;height:100%;background:#34a853;border-radius:6px;"></div>
+                            </div>
+                            {% else %}
+                            <div style="background:{{ bg }};border-radius:6px;height:5px;margin-bottom:.625rem;">
+                                <div style="width:0%;height:100%;background:#34a853;border-radius:6px;"></div>
+                            </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-size:.72rem;font-weight:700;color:#4ade80;">
+                                    <i class="fas fa-star me-1"></i>{{ stats.mastered }} mastered
+                                </span>
+                                {% if stats.due > 0 %}
+                                <span style="font-size:.68rem;color:#f87171;font-weight:700;">{{ stats.due }} due</span>
+                                {% else %}
+                                <span style="font-size:.68rem;color:var(--text-muted);">Up to date</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── All words table ──────────────────────────────────────────────────── -->
+    <div class="card" style="animation: fadeInUp .4s ease .34s both;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:44px;height:44px;background:rgba(245,158,11,0.12);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,158,11,0.25);">
+                    <i class="fas fa-table" style="color:#f59e0b;font-size:1rem;"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0" style="color:var(--text);">All Words</h6>
+                    <small style="color:var(--text-muted);">Up to 50 words ordered by next review date</small>
+                </div>
+            </div>
+
+            {% if not all_words %}
+            <div style="text-align:center; padding:2rem 0; color:var(--text-muted); font-weight:500;">
+                <i class="fas fa-book-open" style="font-size:2rem; opacity:.3; margin-bottom:.75rem; display:block;"></i>
+                No vocabulary words yet. Complete a quiz to start building your bank!
+            </div>
+            {% else %}
+            <div class="table-responsive">
+                <table class="table vocab-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th>Environment</th>
+                            <th class="text-center">Correct</th>
+                            <th class="text-center">Wrong</th>
+                            <th class="text-center">Ease</th>
+                            <th>Next Review</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vw in all_words %}
+                        <tr>
+                            <td>
+                                <span style="font-weight:700; color:var(--text);">{{ vw.word }}</span>
+                                {% if vw.question %}
+                                <div style="font-size:.72rem; color:var(--text-muted); margin-top:.15rem; font-weight:500; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="{{ vw.question }}">
+                                    {{ vw.question }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="env-badge env-{{ vw.environment }}">{{ vw.environment }}</span>
+                            </td>
+                            <td class="text-center" style="font-weight:700; color:#4ade80;">{{ vw.correct_count }}</td>
+                            <td class="text-center" style="font-weight:700; color:#f87171;">{{ vw.wrong_count }}</td>
+                            <td class="text-center" style="color:var(--text-muted); font-size:.8rem;">{{ "%.1f"|format(vw.ease_factor) }}</td>
+                            <td style="font-size:.8rem; color:var(--text-muted);">
+                                {% if vw.next_review %}
+                                    {% set delta_days = ((vw.next_review - now) | string) %}
+                                    {{ vw.next_review.strftime('%b %d, %Y') }}
+                                {% else %}
+                                    <span style="color:#f87171;">Now</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if vw.is_mastered %}
+                                <span class="badge-mastered"><i class="fas fa-star me-1"></i>Mastered</span>
+                                {% elif vw.is_due() %}
+                                <span class="badge-due"><i class="fas fa-clock me-1"></i>Due</span>
+                                {% else %}
+                                <span class="badge-learning"><i class="fas fa-sync me-1"></i>Learning</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

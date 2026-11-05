@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block title %}Vocabulary Review - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<style>
+/* ── Flashcard review page ─────────────────────────────────────────────────── */
+.review-wrap {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 2rem 1rem 4rem;
+}
+
+/* Progress bar */
+.review-progress-bar-bg {
+    width: 100%;
+    max-width: 640px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: .5rem;
+}
+.review-progress-bar-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    transition: width .5s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* Card */
+.flashcard {
+    width: 100%;
+    max-width: 640px;
+    background: #111827;
+    border: 1px solid rgba(245,158,11,0.20);
+    border-radius: 20px;
+    padding: 2.5rem 2rem;
+    margin-top: 1.5rem;
+    animation: cardIn .3s cubic-bezier(0.34,1.56,0.64,1) both;
+    position: relative;
+    overflow: hidden;
+}
+.flashcard::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    border-radius: 20px 20px 0 0;
+}
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Env badge */
+.env-badge { font-size:.65rem; font-weight:700; border-radius:6px; padding:.15rem .5rem; }
+.env-classroom   { background:rgba(8,145,178,.20);  color:#22d3ee; }
+.env-kitchen     { background:rgba(234,67,53,.20);  color:#f87171; }
+.env-supermarket { background:rgba(52,168,83,.20);  color:#4ade80; }
+.env-fruits      { background:rgba(249,115,22,.20); color:#fb923c; }
+
+/* Choice buttons */
+.choice-btn {
+    width: 100%;
+    text-align: left;
+    padding: .875rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: #1e293b;
+    color: #e2e8f0;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .18s, background .18s, transform .15s;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    position: relative;
+    overflow: hidden;
+}
+.choice-btn:hover:not(:disabled) {
+    border-color: rgba(245,158,11,0.55);
+    background: rgba(245,158,11,0.06);
+    transform: translateX(4px);
+}
+.choice-btn:disabled { cursor: default; }
+.choice-btn .letter {
+    min-width: 26px; height: 26px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .78rem; font-weight: 800; color: var(--text-muted);
+    flex-shrink: 0;
+    transition: background .18s, border-color .18s, color .18s;
+}
+
+/* Correct / wrong states */
+.choice-btn.correct {
+    border-color: #34a853 !important;
+    background: rgba(52,168,83,0.12) !important;
+    color: #4ade80 !important;
+}
+.choice-btn.correct .letter {
+    background: rgba(52,168,83,0.25) !important;
+    border-color: #34a853 !important;
+    color: #4ade80 !important;
+}
+.choice-btn.wrong {
+    border-color: #ea4335 !important;
+    background: rgba(234,67,53,0.10) !important;
+    color: #f87171 !important;
+}
+.choice-btn.wrong .letter {
+    background: rgba(234,67,53,0.20) !important;
+    border-color: #ea4335 !important;
+    color: #f87171 !important;
+}
+
+/* Feedback strip */
+.feedback-strip {
+    border-radius: 12px;
+    padding: .875rem 1.25rem;
+    margin-top: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    animation: stripIn .25s ease both;
+    font-weight: 700;
+    font-size: .9rem;
+}
+.feedback-strip.correct-strip {
+    background: rgba(52,168,83,0.12);
+    border: 1px solid rgba(52,168,83,0.30);
+    color: #4ade80;
+}
+.feedback-strip.wrong-strip {
+    background: rgba(234,67,53,0.10);
+    border: 1px solid rgba(234,67,53,0.30);
+    color: #f87171;
+}
+@keyframes stripIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Next button */
+.btn-next {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000; font-weight: 800; font-size: .9rem;
+    border: none; border-radius: 50px;
+    padding: .65rem 2rem; cursor: pointer;
+    margin-top: 1.5rem; align-self: flex-end;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+}
+.btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245,158,11,0.45); }
+
+/* SM-2 info chips */
+.sm2-chip {
+    display: inline-flex; align-items: center; gap: .3rem;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px; padding: .2rem .55rem;
+    font-size: .68rem; font-weight: 700; color: var(--text-muted);
+}
+
+/* Results screen */
+.results-card {
+    width: 100%; max-width: 540px;
+    background: #111827;
+    border: 1px solid rgba(245,158,11,0.20);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    text-align: center;
+    animation: cardIn .4s ease both;
+    margin-top: 2rem;
+}
+.score-ring {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: conic-gradient(var(--ring-color) calc(var(--pct) * 1%), rgba(255,255,255,0.06) 0);
+    position: relative;
+}
+.score-ring::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: #111827;
+}
+.score-ring .ring-text {
+    position: relative; z-index: 1;
+    font-size: 1.6rem; font-weight: 800; line-height: 1;
+}
+.score-ring .ring-sub {
+    position: relative; z-index: 1;
+    font-size: .7rem; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .05em;
+    margin-top: .2rem;
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+}
+@keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+</style>
+
+<div class="review-wrap">
+
+    <!-- Progress row -->
+    <div style="width:100%; max-width:640px;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <div style="font-size:.8rem; font-weight:700; color:var(--text-muted);">
+                <span id="progress-label">Loading…</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:.625rem;">
+                <span id="score-chip" style="font-size:.78rem; font-weight:800; color:#4ade80; display:none;">
+                    <i class="fas fa-check me-1"></i><span id="score-correct">0</span> correct
+                </span>
+                <a href="{{ url_for('main.vocabulary') }}"
+                   style="font-size:.78rem; font-weight:700; color:var(--text-muted); text-decoration:none;">
+                    <i class="fas fa-times me-1"></i>Exit
+                </a>
+            </div>
+        </div>
+        <div class="review-progress-bar-bg">
+            <div class="review-progress-bar-fill" id="progress-fill" style="width:0%;"></div>
+        </div>
+    </div>
+
+    <!-- Flashcard area -->
+    <div id="card-area" style="width:100%; max-width:640px;"></div>
+
+    <!-- Results area (hidden until complete) -->
+    <div id="results-area" style="display:none; width:100%; max-width:640px; display:none;"></div>
+
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let currentWordId = null;
+let currentCorrect = null;
+let answered = false;
+let totalCards = {{ total }};
+let sessionCorrect = 0;
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function envClass(env) {
+    return 'env-' + (env || 'classroom');
+}
+
+function renderSkeleton() {
+    return `
+    <div class="flashcard">
+        <div style="height:18px; width:30%; margin-bottom:1.5rem;" class="skeleton"></div>
+        <div style="height:28px; width:85%; margin-bottom:.5rem;" class="skeleton"></div>
+        <div style="height:28px; width:60%; margin-bottom:2rem;" class="skeleton"></div>
+        <div style="height:54px; width:100%; margin-bottom:.75rem; border-radius:12px;" class="skeleton"></div>
+        <div style="height:54px; width:100%; margin-bottom:.75rem; border-radius:12px;" class="skeleton"></div>
+        <div style="height:54px; width:100%; border-radius:12px;" class="skeleton"></div>
+    </div>`;
+}
+
+// ── Load next card ─────────────────────────────────────────────────────────
+function loadCard() {
+    const cardArea = document.getElementById('card-area');
+    cardArea.innerHTML = renderSkeleton();
+
+    fetch('/vocabulary/review/card')
+        .then(r => r.json())
+        .then(data => {
+            if (data.session_complete) {
+                showResults(data.correct, data.total);
+                return;
+            }
+            renderCard(data);
+        })
+        .catch(() => {
+            cardArea.innerHTML = `<div class="flashcard" style="text-align:center; padding:3rem;">
+                <div style="color:#f87171; font-weight:700;">Connection error. <a href="/vocabulary/review" style="color:#f59e0b;">Retry</a></div>
+            </div>`;
+        });
+}
+
+// ── Render card ─────────────────────────────────────────────────────────────
+function renderCard(data) {
+    currentWordId = data.word_id;
+    currentCorrect = data.correct;
+    answered = false;
+
+    // Progress bar
+    const done  = data.index;
+    const total = data.total;
+    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `Card ${done + 1} of ${total}`;
+
+    // Score chip (visible after first answer)
+    if (done > 0) {
+        document.getElementById('score-chip').style.display = 'inline-flex';
+        document.getElementById('score-correct').textContent = sessionCorrect;
+    }
+
+    const masteredBadge = data.is_mastered
+        ? `<span class="sm2-chip" style="color:#4ade80; border-color:rgba(52,168,83,0.25);">
+               <i class="fas fa-star me-1"></i>Mastered
+           </span>` : '';
+
+    const choicesHTML = data.choices.map((c) => {
+        const parts  = c.split('. ');
+        const letter = parts[0];
+        const text   = parts.slice(1).join('. ') || c;
+        return `
+        <button class="choice-btn" data-answer="${escapeHtml(c)}" onclick="selectAnswer(this)">
+            <span class="letter">${escapeHtml(letter)}</span>
+            <span>${escapeHtml(text)}</span>
+        </button>`;
+    }).join('');
+
+    // Capitalize first letter of word for display
+    const wordDisplay = data.word_display
+        ? data.word_display.charAt(0).toUpperCase() + data.word_display.slice(1)
+        : '';
+
+    document.getElementById('card-area').innerHTML = `
+    <div class="flashcard" id="flashcard-current">
+
+        <!-- Meta chips row -->
+        <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:1.75rem; flex-wrap:wrap;">
+            <span class="env-badge ${envClass(data.environment)}">${data.env_emoji} ${escapeHtml(data.environment)}</span>
+            <span class="sm2-chip">
+                <i class="fas fa-check me-1" style="color:#4ade80;"></i>${data.correct_count}
+                <span style="margin:0 .2rem; color:rgba(255,255,255,0.2);">|</span>
+                <i class="fas fa-times me-1" style="color:#f87171;"></i>${data.wrong_count}
+            </span>
+            <span class="sm2-chip"><i class="fas fa-calendar-alt me-1"></i>every ${data.interval_days}d</span>
+            ${masteredBadge}
+        </div>
+
+        <!-- Word — prominent display -->
+        <div style="text-align:center; margin-bottom:1.75rem;">
+            <div style="font-size:.7rem; font-weight:700; color:var(--text-muted);
+                        text-transform:uppercase; letter-spacing:.12em; margin-bottom:.5rem;">
+                <i class="fas fa-book-open me-1" style="color:#f59e0b;"></i>Vocabulary Word
+            </div>
+            <div style="font-size:2.4rem; font-weight:900; color:#f59e0b;
+                        letter-spacing:-.03em; line-height:1; margin-bottom:.35rem;
+                        text-shadow: 0 0 30px rgba(245,158,11,0.25);">
+                ${escapeHtml(wordDisplay)}
+            </div>
+            <div style="width:48px; height:3px; background:linear-gradient(90deg,#f59e0b,#fbbf24);
+                        border-radius:50px; margin:0 auto;"></div>
+        </div>
+
+        <!-- Usage question -->
+        <p style="color:var(--text); font-size:1rem; font-weight:600; line-height:1.55;
+                  margin-bottom:1.25rem; text-align:center; color:#e2e8f0;">
+            ${escapeHtml(data.review_question)}
+        </p>
+
+        <!-- Choices -->
+        <div id="choices-area" style="display:flex; flex-direction:column; gap:.625rem;">
+            ${choicesHTML}
+        </div>
+
+        <div id="feedback-area"></div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:1.25rem;">
+            <button class="btn-next" id="btn-next" onclick="nextCard()" style="display:none;">
+                Next <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>`;
+}
+
+function escapeHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Answer selection ────────────────────────────────────────────────────────
+function selectAnswer(btn, _unused) {
+    if (answered) return;
+    answered = true;
+
+    const answer = btn.dataset.answer;
+    const isCorrect = (answer === currentCorrect);
+
+    // Disable all buttons
+    document.querySelectorAll('.choice-btn').forEach(b => {
+        b.disabled = true;
+        if (b.dataset.answer === currentCorrect) {
+            b.classList.add('correct');
+        } else if (b === btn && !isCorrect) {
+            b.classList.add('wrong');
+        }
+    });
+
+    // Feedback strip
+    const correctText = currentCorrect.split('. ').slice(1).join('. ') || currentCorrect;
+    const feedbackEl = document.getElementById('feedback-area');
+    if (isCorrect) {
+        feedbackEl.innerHTML = `
+        <div class="feedback-strip correct-strip">
+            <i class="fas fa-circle-check" style="font-size:1.1rem;"></i>
+            <div>
+                <div>Correct! <strong>${escapeHtml(correctText)}</strong></div>
+                <div style="font-size:.78rem; font-weight:500; color:#86efac; margin-top:.2rem;">
+                    Next review in <span id="new-interval">…</span> day(s)
+                </div>
+            </div>
+        </div>`;
+    } else {
+        feedbackEl.innerHTML = `
+        <div class="feedback-strip wrong-strip">
+            <i class="fas fa-circle-xmark" style="font-size:1.1rem;"></i>
+            <div>
+                <div>The correct answer was <strong>${escapeHtml(correctText)}</strong></div>
+                <div style="font-size:.78rem; font-weight:500; color:#fca5a5; margin-top:.2rem;">
+                    This card will be shown again soon
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // Submit to server
+    fetch('/vocabulary/review/answer', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({word_id: currentWordId, was_correct: isCorrect})
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (isCorrect) sessionCorrect = res.correct;
+
+        const intervalEl = document.getElementById('new-interval');
+        if (intervalEl) intervalEl.textContent = res.new_interval;
+
+        // Show next button or auto-complete
+        if (res.session_complete) {
+            document.getElementById('btn-next').style.display = 'none';
+            setTimeout(() => showResults(res.correct, res.total), 900);
+        } else {
+            document.getElementById('btn-next').style.display = 'inline-flex';
+        }
+    })
+    .catch(() => {
+        document.getElementById('btn-next').style.display = 'inline-flex';
+    });
+}
+
+// ── Next card ───────────────────────────────────────────────────────────────
+function nextCard() {
+    const card = document.getElementById('flashcard-current');
+    if (card) {
+        card.style.transition = 'opacity .2s, transform .2s';
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(-20px)';
+    }
+    setTimeout(loadCard, 200);
+}
+
+// ── Results screen ──────────────────────────────────────────────────────────
+function showResults(correct, total) {
+    document.getElementById('card-area').style.display = 'none';
+    const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+    // Update progress bar to 100%
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('progress-label').textContent = `${total} of ${total} reviewed`;
+
+    const ringColor = pct >= 80 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171';
+    const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 50 ? '💪' : '📖';
+    const msg   = pct === 100
+        ? 'Perfect score! Incredible work.'
+        : pct >= 80
+        ? 'Great session! Keep it up.'
+        : pct >= 50
+        ? 'Good effort! Practice makes perfect.'
+        : 'Keep reviewing — you\'ll get there!';
+
+    const resultsEl = document.getElementById('results-area');
+    resultsEl.style.display = 'flex';
+    resultsEl.style.justifyContent = 'center';
+    resultsEl.innerHTML = `
+    <div class="results-card">
+        <div style="font-size:2.8rem; margin-bottom:1rem;">${emoji}</div>
+        <h4 style="color:var(--text); font-weight:800; letter-spacing:-.03em; margin-bottom:.25rem;">Review Complete!</h4>
+        <p style="color:var(--text-muted); font-weight:500; margin-bottom:2rem;">${msg}</p>
+
+        <div class="score-ring" style="--pct:${pct}; --ring-color:${ringColor};">
+            <div class="ring-text" style="color:${ringColor};">${pct}%</div>
+            <div class="ring-sub">${correct}/${total}</div>
+        </div>
+
+        <div style="display:flex; gap:.75rem; margin-top:1.5rem; flex-wrap:wrap; justify-content:center;">
+            <a href="/vocabulary/review"
+               style="display:inline-flex; align-items:center; gap:.5rem;
+                      background:rgba(245,158,11,0.12); color:#f59e0b;
+                      border:1px solid rgba(245,158,11,0.30); border-radius:50px;
+                      padding:.55rem 1.4rem; font-size:.875rem; font-weight:700;
+                      text-decoration:none;">
+                <i class="fas fa-redo"></i>Review Again
+            </a>
+            <a href="/vocabulary"
+               style="display:inline-flex; align-items:center; gap:.5rem;
+                      background:linear-gradient(135deg,#f59e0b,#d97706); color:#000;
+                      border-radius:50px; padding:.55rem 1.4rem; font-size:.875rem;
+                      font-weight:800; text-decoration:none;
+                      box-shadow:0 4px 14px rgba(245,158,11,0.30);">
+                <i class="fas fa-book-open"></i>Vocabulary Bank
+            </a>
+        </div>
+    </div>`;
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+loadCard();
+</script>
+{% endblock %}

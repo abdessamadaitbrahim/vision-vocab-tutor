@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - VR Vocab Tutor{% endblock %}
+
+{% block content %}
+<style>
+/* ── Profile header card ────────────────────────────────── */
+.profile-header-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%) !important;
+    border: 1px solid rgba(245,158,11,0.15) !important;
+    border-radius: 20px !important;
+    position: relative;
+    overflow: hidden;
+}
+
+
+.profile-header-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+}
+
+.profile-header-card .card-body { position: relative; z-index: 1; }
+
+/* ── Avatar ─────────────────────────────────────────────── */
+.profile-avatar {
+    width: 62px;
+    height: 62px;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(255,255,255,0.25);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(14,165,233,0.30);
+}
+
+/* ── Stat cards ─────────────────────────────────────────── */
+.profile-stat-card .stat-num {
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1;
+}
+
+.profile-stat-card .stat-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-top: .3rem;
+}
+
+.profile-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto .875rem;
+}
+</style>
+
+<div class="container mt-4 mb-5" style="max-width: 980px;">
+
+    <!-- ── Header card ─────────────────────────────────────── -->
+    <div class="card profile-header-card mb-4" style="animation: fadeInUp 0.35s ease both;">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+
+                <!-- Avatar -->
+                <div class="profile-avatar">
+                    <i class="fas fa-user" style="font-size:1.55rem; color:#fff;"></i>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-grow-1">
+                    <p class="text-uppercase fw-semibold mb-1"
+                       style="color:rgba(255,255,255,0.55); font-size:.72rem; letter-spacing:.14em;">
+                        <i class="fas fa-id-card me-2"></i>My Profile
+                    </p>
+                    <h3 class="fw-bold mb-0"
+                        style="color:#fff; letter-spacing:-.035em; font-size:1.55rem;">
+                        {{ user.username }}
+                    </h3>
+                    <p class="mb-0 mt-1"
+                       style="color:rgba(255,255,255,0.58); font-size:.85rem; font-weight:500;">
+                        <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                        &nbsp;&middot;&nbsp;
+                        <i class="fas fa-calendar-alt me-1"></i>Member since {{ user.created_at.strftime('%B %Y') }}
+                    </p>
+                </div>
+
+                <!-- Level badge -->
+                <span class="nav-badge-level" style="font-size:.78rem; padding:.4rem 1rem;">
+                    <i class="fas fa-signal me-1"></i>{{ user.level | capitalize }}
+                </span>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Stat cards ──────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+
+        <div class="col-4" style="animation: fadeInUp 0.4s ease 0.10s both;">
+            <div class="card profile-stat-card text-center p-3 h-100"
+                 style="border-top: 3px solid #f59e0b;">
+                <div class="profile-stat-icon"
+                     style="background:rgba(245,158,11,0.12); box-shadow:0 3px 10px rgba(245,158,11,0.18);">
+                    <i class="fas fa-gamepad" style="color:#f59e0b; font-size:1.1rem;"></i>
+                </div>
+                <div class="stat-num" style="color:var(--text);">{{ total_sessions }}</div>
+                <div class="stat-label">Sessions</div>
+            </div>
+        </div>
+
+        <div class="col-4" style="animation: fadeInUp 0.4s ease 0.20s both;">
+            <div class="card profile-stat-card text-center p-3 h-100"
+                 style="border-top: 3px solid #34a853;">
+                <div class="profile-stat-icon"
+                     style="background:rgba(52,168,83,0.12); box-shadow:0 3px 10px rgba(52,168,83,0.18);">
+                    <i class="fas fa-percent" style="color:#34a853; font-size:1.1rem;"></i>
+                </div>
+                <div class="stat-num" style="color:var(--text);">{{ average_score }}%</div>
+                <div class="stat-label">Avg Score</div>
+            </div>
+        </div>
+
+        <div class="col-4" style="animation: fadeInUp 0.4s ease 0.30s both;">
+            <div class="card profile-stat-card text-center p-3 h-100"
+                 style="border-top: 3px solid #f59e0b;">
+                <div class="profile-stat-icon"
+                     style="background:rgba(245,158,11,0.12); box-shadow:0 3px 10px rgba(245,158,11,0.18);">
+                    <i class="fas fa-trophy" style="color:#f59e0b; font-size:1.1rem;"></i>
+                </div>
+                <div class="stat-num" style="font-size:1.35rem; letter-spacing:-.02em;">
+                    {{ user.level | capitalize }}
+                </div>
+                <div class="stat-label">Level</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Sessions table ─────────────────────────────────── -->
+    <div class="card shadow" style="animation: fadeInUp 0.4s ease 0.38s both;">
+
+        <div class="card-header border-0 pt-3 pb-2 px-4 d-flex justify-content-between align-items-center"
+             style="background: transparent !important;">
+            <div>
+                <h6 class="fw-bold mb-0" style="color:var(--text);">
+                    <i class="fas fa-history me-2" style="color:var(--text-muted);"></i>Session History
+                </h6>
+                <small style="color:var(--text-muted);">All your quiz sessions</small>
+            </div>
+            <span class="badge px-3 py-2"
+                  style="background:rgba(245,158,11,0.12); color:#f59e0b; border-radius:20px; border:1px solid rgba(245,158,11,0.25);">
+                {{ total_sessions }} total
+            </span>
+        </div>
+
+        <div class="card-body p-0" style="background: transparent !important;">
+            {% if all_sessions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 dashboard-table">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">#</th>
+                            <th>Date</th>
+                            <th>Level</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Result</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in all_sessions %}
+                        <tr>
+                            <td class="ps-4">
+                                <small style="color:var(--text-muted);">{{ loop.index }}</small>
+                            </td>
+                            <td>
+                                <small>
+                                    <i class="fas fa-calendar-alt me-1" style="color:#9aa0a6;"></i>
+                                    {{ s.created_at.strftime('%d %b %Y') }}
+                                </small><br>
+                                <small style="color:#9aa0a6;">{{ s.created_at.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                {% if s.get_percentage() >= 80 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(52,168,83,0.15); color:#4ade80; border-radius:20px;">Advanced</span>
+                                {% elif s.get_percentage() >= 50 %}
+                                    <span class="badge px-2 py-1" style="background:rgba(245,158,11,0.15); color:#fbbf24; border-radius:20px;">Intermediate</span>
+                                {% else %}
+                                    <span class="badge px-2 py-1" style="background:rgba(234,67,53,0.15); color:#f87171; border-radius:20px;">Beginner</span>
+                                {% endif %}
+                            </td>
+                            <td class="fw-semibold" style="color:var(--text);">
+                                {{ s.score }} / {{ s.total_questions }}
+                            </td>
+                            <td style="min-width:140px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress dashboard-progress flex-grow-1" style="height:8px;">
+                                        <div class="progress-bar"
+                                             style="width:{{ s.get_percentage() }}%;
+                                             background:{% if s.get_percentage() >= 80 %}#34a853{% elif s.get_percentage() >= 50 %}#fbbc04{% else %}#ea4335{% endif %};">
+                                        </div>
+                                    </div>
+                                    <small class="fw-semibold" style="min-width:38px; color:var(--text-muted);">
+                                        {{ s.get_percentage() | round(1) }}%
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if s.get_percentage() >= 80 %}
+                                    <span class="badge px-2 py-1"
+                                          style="background:rgba(52,168,83,0.15); color:#4ade80; border:1px solid rgba(52,168,83,0.35); border-radius:20px;">
+                                        <i class="fas fa-arrow-up me-1"></i>Excellent
+                                    </span>
+                                {% elif s.get_percentage() >= 50 %}
+                                    <span class="badge px-2 py-1"
+                                          style="background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); border-radius:20px;">
+                                        <i class="fas fa-minus me-1"></i>Good
+                                    </span>
+                                {% else %}
+                                    <span class="badge px-2 py-1"
+                                          style="background:rgba(234,67,53,0.15); color:#f87171; border:1px solid rgba(234,67,53,0.35); border-radius:20px;">
+                                        <i class="fas fa-arrow-down me-1"></i>Keep going
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div style="font-size:3rem; margin-bottom:1rem; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.10));">🎮</div>
+                <h5 class="fw-bold mb-2" style="color:var(--text); letter-spacing:-.025em;">No sessions yet</h5>
+                <p style="color:var(--text-muted); font-weight:500; max-width:280px; margin:0 auto 1.25rem;">
+                    Start your first quiz to see your history here.
+                </p>
+                <a href="{{ url_for('main.home') }}" class="btn btn-primary px-4">
+                    <i class="fas fa-play me-2"></i>Start a Quiz
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ── Actions ────────────────────────────────────────── -->
+    <div class="d-flex justify-content-center gap-3 mt-4 mb-2"
+         style="animation: fadeInUp 0.4s ease 0.48s both;">
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary px-4">
+            <i class="fas fa-home me-2"></i>Home
+        </a>
+        <a href="{{ url_for('quiz.quiz_page') }}" class="btn btn-primary px-4">
+            <i class="fas fa-play me-2"></i>New Session
+        </a>
+    </div>
+
+</div>
+{% endblock %}
