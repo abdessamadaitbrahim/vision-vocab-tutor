@@ -10,8 +10,6 @@
 
 A web application that teaches English vocabulary from real-world images. An object detector reads each picture, a vision LLM writes a quiz question about what is actually visible, and a spaced-repetition system schedules the words the learner gets wrong.
 
-Personal computer-vision project by Abdessamad Ait Brahim. The interface is branded "VR Vocab Tutor".
-
 ![Home](docs/images/home.png)
 
 ## Overview
@@ -143,3 +141,7 @@ vision-vocab-tutor/
 |-- .env.example
 `-- requirements.txt
 ```
+## Author
+
+**Abdessamad Ait Brahim**
+GitHub: [@abdessamadaitbrahim](https://github.com/abdessamadaitbrahim)
